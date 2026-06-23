@@ -1,0 +1,49 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
+import { IsOptional, IsString } from 'class-validator';
+{{#if enablePagination}}
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+{{/if}}
+import { SortOrder } from '../../../common/enums/sort-order.enum';
+import { IsOrderQuery } from '../../../common/validators/is-order-query';
+import type { OrderQuery } from '../../../common/validators/is-order-query';
+
+export const LIST_{{constantCase name}}_SORTABLE_FIELDS: readonly string[] = [
+  'id',
+  'createdAt',
+  'updatedAt',
+  // <sortable-fields>
+  // </sortable-fields>
+];
+
+export const LIST_{{constantCase name}}_SEARCHABLE_FIELDS: readonly string[] = [
+  // <searchable-fields>
+  // </searchable-fields>
+];
+
+export class List{{pascalCase name}}QueryDto{{#if enablePagination}} extends PaginationQueryDto{{/if}} {
+  // <properties>
+  // </properties>
+
+  @ApiPropertyOptional({
+    name: 'search',
+    type: String,
+    description: 'Free-text search across searchable string fields.',
+  })
+  @Expose({ name: 'search' })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({
+    name: 'order',
+    type: Object,
+    example: { id: SortOrder.ASC },
+    description:
+      'Bracket-style ordering, e.g. ?order[created_at]=DESC&order[id]=ASC',
+  })
+  @Expose({ name: 'order' })
+  @IsOptional()
+  @IsOrderQuery(LIST_{{constantCase name}}_SORTABLE_FIELDS)
+  order?: OrderQuery;
+}

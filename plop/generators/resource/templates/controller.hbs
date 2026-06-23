@@ -1,0 +1,144 @@
+import {
+  Controller,
+  {{#if genCRUD}}
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  {{/if}}
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiResponse,
+} from '@nestjs/swagger';
+
+import { {{pascalCase name}}Service } from '../services/{{kebabCase name}}.service';
+{{#if genCRUD}}
+import { Create{{pascalCase name}}Dto } from '../dto/create-{{kebabCase name}}.dto';
+import { Update{{pascalCase name}}Dto } from '../dto/update-{{kebabCase name}}.dto';
+import { {{pascalCase name}}Dto } from '../dto/{{kebabCase name}}.dto';
+import { List{{pascalCase name}}QueryDto } from '../dto/list-{{kebabCase name}}.dto';
+import { Create{{pascalCase name}}Response } from '../responses/create-{{kebabCase name}}.response';
+
+import { List{{pascalCase name}}Response } from '../responses/list-{{kebabCase name}}.response';
+import { Detail{{pascalCase name}}Response } from '../responses/detail-{{kebabCase name}}.response';
+import { Update{{pascalCase name}}Response } from '../responses/update-{{kebabCase name}}.response';
+import { Delete{{pascalCase name}}Response } from '../responses/delete-{{kebabCase name}}.response';
+{{/if}}
+
+@Controller('{{kebabCase name}}')
+export class {{pascalCase name}}Controller {
+  constructor(
+    // <properties>
+    // <property name="{{camelCase name}}Service">
+    private readonly {{camelCase name}}Service: {{pascalCase name}}Service,
+    // </property>
+    // </properties>
+  ) {}
+
+  {{#if genCRUD}}
+  // <routes>
+
+  // <route name="create">
+  @ApiCreatedResponse({
+    type: Create{{pascalCase name}}Response,
+  })
+  @Post()
+  async create(
+    // <arguments>
+    // <argument name="create{{pascalCase name}}Dto">
+    @Body() create{{pascalCase name}}Dto: Create{{pascalCase name}}Dto,
+    // </argument>
+    // </arguments>
+  ): Promise<Create{{pascalCase name}}Response> {
+    const data = await this.{{camelCase name}}Service.create(create{{pascalCase name}}Dto);
+    return new Create{{pascalCase name}}Response(data);
+  }
+  // </route>
+
+  // <route name="findAll">
+  @ApiOkResponse({
+    type: List{{pascalCase name}}Response,
+  })
+  @Get()
+  async findAll(
+    // <arguments>
+    // <argument name="query">
+    @Query() query: List{{pascalCase name}}QueryDto,
+    // </argument>
+    // </arguments>
+  ) {
+    {{#if enablePagination}}
+    const [items, total] = await this.{{camelCase name}}Service.findAll(query);
+    return new List{{pascalCase name}}Response(items, total, {
+      page: query.page,
+      perPage: query.perPage,
+    });
+    {{else}}
+    const data = await this.{{camelCase name}}Service.findAll(query);
+    return new List{{pascalCase name}}Response(data);
+    {{/if}}
+  }
+  // </route>
+
+  // <route name="findOne">
+  @ApiOkResponse({
+    type: Detail{{pascalCase name}}Response,
+  })
+  @Get(':id')
+  async findOne(
+    // <arguments>
+    // <argument name="params">
+    @Param() params: {{pascalCase name}}Dto
+    // </argument>
+    // </arguments>
+  ) {
+    const data = await this.{{camelCase name}}Service.findOne(params.id);
+    return new Detail{{pascalCase name}}Response(data);
+  }
+  // </route>
+
+  // <route name="update">
+  @ApiResponse({
+    type: Update{{pascalCase name}}Response,
+  })
+  @Patch(':id')
+  async update(
+    // <arguments>
+    // <argument name="params">
+    @Param() params: {{pascalCase name}}Dto,
+    // </argument>
+    // <argument name="update{{pascalCase name}}Dto">
+    @Body() update{{pascalCase name}}Dto: Update{{pascalCase name}}Dto,
+    // </argument>
+    // </arguments>
+  ) {
+    const data = await this.{{camelCase name}}Service.update(params.id,
+      update{{pascalCase name}}Dto);
+    return new Update{{pascalCase name}}Response(data);
+  }
+  // </route>
+
+  // <route name="remove">
+  @ApiResponse({
+    type: Delete{{pascalCase name}}Response,
+  })
+  @Delete(':id')
+  async remove(
+    // <arguments>
+    // <argument name="params">
+    @Param() params: {{pascalCase name}}Dto,
+    // </argument>
+    // </arguments>
+  ) {
+    await this.{{camelCase name}}Service.remove(params.id);
+    return new Delete{{pascalCase name}}Response({});
+  }
+  // </route>
+  // </routes>
+  {{/if}}
+}

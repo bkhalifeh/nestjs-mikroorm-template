@@ -1,0 +1,56 @@
+  // <property name="{{camelCase name}}">
+{{#if (isRelation type)}}
+  {{camelCase name}}{{#if nullable}}?{{else}}!{{/if}}: {{#if (isCollectionRelation relationKind)}}Collection<{{pascalCase targetEntity}}>{{else}}{{pascalCase targetEntity}}{{/if}};
+{{else}}
+  @ApiProperty({
+    name: '{{camelCase name}}',
+    type: '{{type}}',
+    {{#if (eq type 'enum')}}
+    enum: {{pascalCase enumName}},
+    {{/if}}
+    {{#if nullable}}
+    nullable: true,
+    {{/if}}
+    {{#if array}}
+    array: true,
+    {{/if}}
+    {{#unless swagger}}
+    swagger: false,
+    {{/unless}}
+    {{#if addValidator}}
+    addValidator: true,
+    {{/if}}
+    {{#if (and format (neq format 'skip'))}}
+    format: '{{format}}',
+    {{/if}}
+    {{#if formatOption}}
+    formatOption: '{{formatOption}}',
+    {{/if}}
+    {{#if (gte minLength 0)}}
+    minLength: {{minLength}},
+    {{/if}}
+    {{#if (gte maxLength 0)}}
+    maxLength: {{maxLength}},
+    {{/if}}
+    {{#if (gte minNumber 0)}}
+    minNumber: {{minNumber}},
+    {{/if}}
+    {{#if (gte maxNumber 0)}}
+    maxNumber: {{maxNumber}},
+    {{/if}}
+    {{#if (gte minItems 0)}}
+    minItems: {{minItems}},
+    {{/if}}
+    {{#if (gte maxItems 0)}}
+    maxItems: {{maxItems}},
+    {{/if}}
+    {{#if swaggerExample}}
+    example: {{#if (eq type 'enum')}}{{#if (eq swaggerExample 'generate auto')}}Object.values({{pascalCase enumName}}).pop(){{else}}{{pascalCase enumName}}.{{swaggerExample}}{{/if}}{{/if}}{{#if (or (or (eq type 'uuid') (eq type 'datetime')) (isStringType type))}}'{{swaggerExample}}'{{/if}}{{#if (or (eq type 'boolean') (isNumberType type))}}{{swaggerExample}}{{/if}},
+    {{/if}}
+    {{#if (and (eq type 'uuid') uuidVersion (neq uuidVersion 'any'))}}
+    uuidVersion: '{{uuidVersion}}',
+    {{/if}}
+  })
+  {{camelCase name}}{{#if nullable}}?{{else}}!{{/if}}: {{#if (eq type 'enum')}}{{pascalCase enumName}}{{else}}{{dbType2Ts type}}{{/if}}{{#if array}}[]{{/if}};
+{{/if}}
+  // </property>

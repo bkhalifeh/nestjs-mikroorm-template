@@ -1,0 +1,300 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+  describe,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  it,
+  expect,
+  vi,
+} from 'vitest';
+// <imports>
+// <import>
+import { newDb } from 'pg-mem';
+// </import>
+// <import name="@mikro-orm/postgresql">
+import {
+  AbstractSqlDriver,
+  EntityManager,
+  MikroORM,
+  PostgreSqlConnection,
+  PostgreSqlPlatform,
+  SchemaGenerator,
+} from '@mikro-orm/postgresql';
+// </import>
+// <import name="PostgresDialect">
+import { PostgresDialect } from 'kysely';
+// </import>
+// <import name="getLoggerToken">
+import { getLoggerToken } from 'nestjs-pino';
+// </import>
+// <import name="ClsService">
+import { ClsService } from 'nestjs-cls';
+// </import>
+// <import name="NotFoundException">
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+// </import>
+// <import name="{{pascalCase name}}Service">
+import { {{pascalCase name}}Service } from './{{kebabCase name}}.service';
+// </import>
+// <import name="{{pascalCase name}}">
+import { {{pascalCase name}} } from '../domains/{{kebabCase name}}';
+// </import>
+// <import name="{{pascalCase name}}Entity">
+import { {{pascalCase name}}Entity } from '../entities/{{kebabCase name}}.entity';
+// </import>
+// <import name="{{pascalCase name}}Repository">
+import { {{pascalCase name}}Repository } from '../repositories/{{kebabCase name}}.repository';
+// </import>
+// </imports>
+
+function buildCreateDto(): Partial<{{pascalCase name}}> {
+  return {
+    // <fixture>
+    // </fixture>
+  };
+}
+
+describe('{{pascalCase name}}Service', () => {
+  let orm: MikroORM;
+  let service: {{pascalCase name}}Service;
+  // let em: EntityManager;
+
+  beforeAll(async () => {
+    const db = newDb();
+    const pgMem = db.adapters.createPg();
+
+    class PgMemConnection extends PostgreSqlConnection {
+      override createKyselyDialect() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        return new PostgresDialect({ pool: new pgMem.Pool() });
+      }
+    }
+
+    class PgMemDriver extends AbstractSqlDriver<PgMemConnection> {
+      constructor(config: never) {
+        super(config, new PostgreSqlPlatform(), PgMemConnection as never, [
+          'knex',
+          'pg',
+        ]);
+      }
+    }
+
+    orm = await MikroORM.init({
+      driver: PgMemDriver as never,
+      dbName: 'public',
+      entities: [
+        // <entities>
+        // <entity name="{{pascalCase name}}Entity">
+        {{pascalCase name}}Entity,
+        // </entity>
+        // </entities>
+      ],
+      allowGlobalContext: true,
+      extensions: [SchemaGenerator],
+    });
+
+    await orm.schema.create();
+  });
+
+  afterAll(async () => {
+    await orm.close(true);
+  });
+
+  beforeEach(async () => {
+    await orm.em.nativeDelete({{pascalCase name}}, {});
+    orm.em.clear();
+
+    const forkedEm = orm.em.fork();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        // <providers>
+        // <provider name="{{pascalCase name}}Service">
+        {{pascalCase name}}Service,
+        // </provider>
+        // <provider name="EntityManager">
+        { provide: EntityManager, useValue: forkedEm },
+        // </provider>
+        // <provider name="{{pascalCase name}}Repository">
+        {
+          provide: {{pascalCase name}}Repository,
+          useFactory: (entityManager: EntityManager): {{pascalCase name}}Repository =>
+            entityManager.getRepository({{pascalCase name}}),
+          inject: [EntityManager],
+        },
+        // </provider>
+        // <provider name="ClsService">
+        {
+          provide: ClsService,
+          useValue: { get: vi.fn().mockReturnValue('test-request-id') },
+        },
+        // </provider>
+        // <provider name="PinoLogger">
+        {
+          provide: getLoggerToken({{pascalCase name}}Service.name),
+          useValue: {
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+            debug: vi.fn(),
+          },
+        },
+        // </provider>
+        // </providers>
+      ],
+    }).compile();
+
+    service = module.get<{{pascalCase name}}Service>({{pascalCase name}}Service);
+    // em = module.get<EntityManager>(EntityManager);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  {{#if genCRUD}}
+  // <functions>
+  // <function name="create">
+  describe('create', () => {
+    it('persists a new {{camelCase name}} and returns it with a generated id', async () => {
+      const result = await service.create(buildCreateDto() as never);
+
+      expect(result).toBeDefined();
+      expect(result.id).toEqual(expect.any(String));
+      expect(result.createdAt).toBeInstanceOf(Date);
+
+      const found = await orm.em
+        .fork()
+        .findOne({{pascalCase name}}, { id: result.id });
+      expect(found).not.toBeNull();
+    });
+  });
+  // </function>
+
+  // <function name="findAll">
+  describe('findAll', () => {
+    {{#if enablePagination}}
+    it('returns an empty list and zero total when there are no records', async () => {
+      const [items, total] = await service.findAll({ page: 1, perPage: 20 } as never);
+      expect(items).toEqual([]);
+      expect(total).toBe(0);
+    });
+
+    it('returns every persisted {{camelCase name}} with its total count', async () => {
+      await service.create(buildCreateDto() as never);
+      await service.create(buildCreateDto() as never);
+
+      const [items, total] = await service.findAll({ page: 1, perPage: 20 } as never);
+      expect(items).toHaveLength(2);
+      expect(total).toBe(2);
+    });
+
+    it('honours offset/limit via page + perPage', async () => {
+      await service.create(buildCreateDto() as never);
+      await service.create(buildCreateDto() as never);
+      await service.create(buildCreateDto() as never);
+
+      const [items, total] = await service.findAll({ page: 2, perPage: 2 } as never);
+      expect(items).toHaveLength(1);
+      expect(total).toBe(3);
+    });
+
+    it('throws BadRequestException when page exceeds last page', async () => {
+      await service.create(buildCreateDto() as never);
+      await service.create(buildCreateDto() as never);
+
+      await expect(
+        service.findAll({ page: 5, perPage: 2 } as never),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('skips the fetch query when total is zero', async () => {
+      const repository = (service as never as {
+        {{camelCase name}}Repository: {{pascalCase name}}Repository;
+      }).{{camelCase name}}Repository;
+      const findSpy = vi.spyOn(repository, 'find');
+
+      const [items, total] = await service.findAll({ page: 1, perPage: 20 } as never);
+
+      expect(items).toEqual([]);
+      expect(total).toBe(0);
+      expect(findSpy).not.toHaveBeenCalled();
+    });
+    {{else}}
+    it('returns an empty array when there are no records', async () => {
+      const result = await service.findAll({} as never);
+      expect(result).toEqual([]);
+    });
+
+    it('returns every persisted {{camelCase name}}', async () => {
+      await service.create(buildCreateDto() as never);
+      await service.create(buildCreateDto() as never);
+
+      const result = await service.findAll({} as never);
+      expect(result).toHaveLength(2);
+    });
+    {{/if}}
+  });
+  // </function>
+
+  // <function name="findOne">
+  describe('findOne', () => {
+    it('returns the {{camelCase name}} when it exists', async () => {
+      const created = await service.create(buildCreateDto() as never);
+
+      const result = await service.findOne(created.id);
+      expect(result.id).toBe(created.id);
+    });
+
+    it('throws NotFoundException when the {{camelCase name}} is missing', async () => {
+      await expect(
+        service.findOne('00000000-0000-0000-0000-000000000000'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+  // </function>
+
+  // <function name="update">
+  describe('update', () => {
+    it('returns the same {{camelCase name}} when the update payload is empty', async () => {
+      const created = await service.create(buildCreateDto() as never);
+
+      const result = await service.update(created.id, buildCreateDto() as never);
+      expect(result.id).toBe(created.id);
+    });
+
+    it('throws NotFoundException when the {{camelCase name}} is missing', async () => {
+      await expect(
+        service.update(
+          '00000000-0000-0000-0000-000000000000',
+          buildCreateDto() as never,
+        ),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+  // </function>
+
+  // <function name="remove">
+  describe('remove', () => {
+    it('removes an existing {{camelCase name}}', async () => {
+      const created = await service.create(buildCreateDto() as never);
+
+      await service.remove(created.id);
+
+      const found = await orm.em
+        .fork()
+        .findOne({{pascalCase name}}, { id: created.id });
+      expect(found).toBeNull();
+    });
+
+    it('throws NotFoundException when the {{camelCase name}} is missing', async () => {
+      await expect(
+        service.remove('00000000-0000-0000-0000-000000000000'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+  // </function>
+  // </functions>
+  {{/if}}
+});

@@ -1,0 +1,68 @@
+  // <filter-property name="{{camelCase name}}">
+{{#if (isRelation type)}}
+  @ApiPropertyOptional({
+    name: '{{snakeCase name}}_id',
+    type: String,
+    isArray: true,
+    format: 'uuid',
+  })
+  @Expose({ name: '{{snakeCase name}}_id' })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  {{camelCase name}}Id?: string[];
+{{else if (eq type 'enum')}}
+  @ApiPropertyOptional({
+    name: '{{snakeCase name}}',
+    enum: {{pascalCase enumName}},
+    isArray: true,
+  })
+  @Expose({ name: '{{snakeCase name}}' })
+  @IsOptional()
+  @IsArray()
+  @IsEnum({{pascalCase enumName}}, { each: true })
+  {{camelCase name}}?: {{pascalCase enumName}}[];
+{{else if (isNumberType type)}}
+  @ApiPropertyOptional({
+    name: '{{snakeCase name}}_min',
+    type: '{{#if (isIntegerType type)}}integer{{else}}number{{/if}}',
+  })
+  @Expose({ name: '{{snakeCase name}}_min' })
+  @Type(() => Number)
+  @IsOptional()
+  @Is{{#if (isIntegerType type)}}Int{{else}}Number{{/if}}()
+  {{camelCase name}}Min?: number;
+
+  @ApiPropertyOptional({
+    name: '{{snakeCase name}}_max',
+    type: '{{#if (isIntegerType type)}}integer{{else}}number{{/if}}',
+  })
+  @Expose({ name: '{{snakeCase name}}_max' })
+  @Type(() => Number)
+  @IsOptional()
+  @Is{{#if (isIntegerType type)}}Int{{else}}Number{{/if}}()
+  {{camelCase name}}Max?: number;
+{{else if (isDateType type)}}
+  @ApiPropertyOptional({
+    name: '{{snakeCase name}}_from',
+    type: 'string',
+    format: 'date-time',
+  })
+  @Expose({ name: '{{snakeCase name}}_from' })
+  @Type(() => Date)
+  @IsOptional()
+  @IsDate()
+  {{camelCase name}}From?: Date;
+
+  @ApiPropertyOptional({
+    name: '{{snakeCase name}}_to',
+    type: 'string',
+    format: 'date-time',
+  })
+  @Expose({ name: '{{snakeCase name}}_to' })
+  @Type(() => Date)
+  @IsOptional()
+  @IsDate()
+  {{camelCase name}}To?: Date;
+{{/if}}
+  // </filter-property>

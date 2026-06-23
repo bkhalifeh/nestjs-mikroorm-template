@@ -1,0 +1,25 @@
+    // <filter name="{{camelCase name}}">
+{{#if (isRelation type)}}
+    if (query.{{camelCase name}}Id?.length) {
+      where.{{camelCase name}} = { id: { $in: query.{{camelCase name}}Id } };
+    }
+{{else if (eq type 'enum')}}
+    if (query.{{camelCase name}}?.length) {
+      where.{{camelCase name}} = { $in: query.{{camelCase name}} };
+    }
+{{else if (isNumberType type)}}
+    if (query.{{camelCase name}}Min !== undefined || query.{{camelCase name}}Max !== undefined) {
+      const range: Record<string, unknown> = {};
+      if (query.{{camelCase name}}Min !== undefined) range.$gte = query.{{camelCase name}}Min;
+      if (query.{{camelCase name}}Max !== undefined) range.$lte = query.{{camelCase name}}Max;
+      where.{{camelCase name}} = range;
+    }
+{{else if (isDateType type)}}
+    if (query.{{camelCase name}}From !== undefined || query.{{camelCase name}}To !== undefined) {
+      const range: Record<string, unknown> = {};
+      if (query.{{camelCase name}}From !== undefined) range.$gte = query.{{camelCase name}}From;
+      if (query.{{camelCase name}}To !== undefined) range.$lte = query.{{camelCase name}}To;
+      where.{{camelCase name}} = range;
+    }
+{{/if}}
+    // </filter>
