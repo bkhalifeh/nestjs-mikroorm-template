@@ -1,3 +1,4 @@
+import { HealthIndicatorService } from '@nestjs/terminus';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RedisHealthIndicator } from './redis-health-indicator';
 
@@ -6,7 +7,18 @@ describe('RedisHealthIndicator', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RedisHealthIndicator],
+      providers: [
+        RedisHealthIndicator,
+        {
+          provide: HealthIndicatorService,
+          useValue: {
+            check: vi.fn().mockReturnValue({
+              up: vi.fn(),
+              down: vi.fn(),
+            }),
+          },
+        },
+      ],
     }).compile();
 
     provider = module.get<RedisHealthIndicator>(RedisHealthIndicator);

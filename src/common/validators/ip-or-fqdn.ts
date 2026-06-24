@@ -9,7 +9,9 @@ import {
 @ValidatorConstraint({ name: 'ipOrFqdn', async: false })
 export class IpOrFqdn implements ValidatorConstraintInterface {
   validate(value: any): Promise<boolean> | boolean {
-    return isFQDN(value) || isIP(value);
+    // require_tld:false so container/orchestrator service names (e.g. "postgres",
+    // "redis") and "localhost" validate, alongside real FQDNs and IPs.
+    return isFQDN(value, { require_tld: false }) || isIP(value);
   }
 
   defaultMessage() {

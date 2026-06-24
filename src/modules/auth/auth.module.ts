@@ -43,8 +43,10 @@ import { LocalStrategy } from './strategies/local.strategy';
     LocalStrategy,
     GoogleStrategy,
     GithubStrategy,
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
+    JwtAuthGuard,
+    RolesGuard,
+    { provide: APP_GUARD, useExisting: JwtAuthGuard },
+    { provide: APP_GUARD, useExisting: RolesGuard },
     // </providers>
   ],
   controllers: [

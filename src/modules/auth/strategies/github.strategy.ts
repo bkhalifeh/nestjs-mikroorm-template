@@ -16,8 +16,10 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     config: OAuthConfigType,
   ) {
     super({
-      clientID: config.githubClientId,
-      clientSecret: config.githubClientSecret,
+      // Fall back to placeholders when OAuth is unconfigured so the app still
+      // boots; the GitHub routes only fail if actually used without real creds.
+      clientID: config.githubClientId || 'unconfigured',
+      clientSecret: config.githubClientSecret || 'unconfigured',
       callbackURL: config.githubCallbackUrl,
       scope: ['user:email'],
     });

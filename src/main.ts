@@ -73,12 +73,13 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    // origin: isProduction ? ['https://mehrschoolapp.ir'] : '*',
-    // credentials: true,
-    // allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    // exposedHeaders: ['Set-Cookie'],
-    // methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    origin: appConfig.corsOrigin,
+    credentials: appConfig.corsCredentials,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
+
+  // Drain DB pool / BullMQ workers and run onModuleDestroy hooks on SIGTERM/SIGINT.
+  app.enableShutdownHooks();
 
   if (appConfig.enableVersion) {
     app.enableVersioning({

@@ -2,6 +2,14 @@
 // <import name="Module">
 import { Module } from '@nestjs/common';
 // </import>
+// <import name="APP_FILTER">
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { AllExceptionsFilter } from '../../common/filters/all-exceptions.filter';
+// </import>
+// <import name="ThrottlerModule">
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { throttlerModuleOptions } from '../throttler/throttler-module-options';
+// </import>
 // <import name="BullModule">
 import { BullModule } from '@nestjs/bullmq';
 // </import>
@@ -100,6 +108,9 @@ import { AuthModule } from '../auth/auth.module';
     // <dependency name="MikroOrmModule">
     MikroOrmModule.forRootAsync(ormModuleConfig),
     // </dependency>
+    // <dependency name="ThrottlerModule">
+    ThrottlerModule.forRootAsync(throttlerModuleOptions),
+    // </dependency>
     // <dependency name="S3Module">
     S3Module.forRootAsync(s3ModuleOptions),
     // </dependency>
@@ -128,6 +139,12 @@ import { AuthModule } from '../auth/auth.module';
     AuthModule,
     // </dependency>
     // </dependencies>
+  ],
+  providers: [
+    // <providers>
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // </providers>
   ],
 })
 export class AppModule {}

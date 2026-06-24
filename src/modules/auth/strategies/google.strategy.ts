@@ -18,8 +18,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     config: OAuthConfigType,
   ) {
     super({
-      clientID: config.googleClientId,
-      clientSecret: config.googleClientSecret,
+      // Fall back to placeholders when OAuth is unconfigured so the app still
+      // boots; the Google routes only fail if actually used without real creds.
+      clientID: config.googleClientId || 'unconfigured',
+      clientSecret: config.googleClientSecret || 'unconfigured',
       callbackURL: config.googleCallbackUrl,
       scope: ['email', 'profile'],
     });

@@ -5,7 +5,8 @@ import { Expose } from 'class-transformer';
 
 export class RedisConfig {
   @Expose({ name: 'REDIS__URL' })
-  @IsUrl({ protocols: ['redis'] })
+  // require_tld:false so container hostnames (redis://redis:6379) and localhost validate.
+  @IsUrl({ protocols: ['redis'], require_tld: false })
   url!: string;
 }
 export const REDIS_CONFIG_PROVIDER = createValidatedConfig(

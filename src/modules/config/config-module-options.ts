@@ -36,6 +36,9 @@ import { MAIL_CONFIG_PROVIDER } from './resources/mail-resource';
 // <import name="SmsConfig">
 import { SMS_CONFIG_PROVIDER } from './resources/sms-resource';
 // </import>
+// <import name="ThrottlerConfig">
+import { THROTTLER_CONFIG_PROVIDER } from './resources/throttler-resource';
+// </import>
 // </imports>
 export const configModuleOptions: ConfigModuleOptions = {
   isGlobal: true,
@@ -76,6 +79,9 @@ export const configModuleOptions: ConfigModuleOptions = {
     // </provider>
     // <provider name="SmsConfig">
     SMS_CONFIG_PROVIDER,
+    // </provider>
+    // <provider name="ThrottlerConfig">
+    THROTTLER_CONFIG_PROVIDER,
     // </provider>
     // </providers>
   ],

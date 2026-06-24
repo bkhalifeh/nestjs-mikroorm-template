@@ -14,7 +14,7 @@ export const UserIdentityEntity = defineEntity({
     provider: p.enum(() => AuthProvider).serializedName('provider'),
     providerUserId: p.string().length(255).serializedName('provider_user_id'),
     email: p.string().length(255).nullable().serializedName('email'),
-    user: p.manyToOne(() => UserEntity).serializedName('user'),
+    user: p.manyToOne(UserEntity).serializedName('user'),
     // </properties>
   },
   uniques: [{ properties: ['provider', 'providerUserId'] }],

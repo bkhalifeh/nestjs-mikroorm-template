@@ -11,6 +11,7 @@ import { Get, Inject, Req } from '@nestjs/common';
 
 import { NodeEnv } from '../../common/enums/node-env.enum';
 import { ApiController } from '../../common/decorators/api-controller.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { NODE_CONFIG_PROVIDER } from '../config/resources/node-resource';
 import type { NodeConfigType } from '../config/resources/node-resource';
 import type { Request } from 'express';
@@ -27,6 +28,7 @@ export class HealthController {
     private readonly nodeConfig: NodeConfigType,
   ) {}
 
+  @Public()
   @Get()
   @HealthCheck()
   async check(@Req() req: Request): Promise<HealthCheckResult | null> {
