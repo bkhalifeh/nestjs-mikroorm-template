@@ -1,0 +1,60 @@
+name: nestjs-mikroorm-prod
+
+# Lean production stack: Postgres + Redis + the built app image.
+# The app entrypoint auto-applies migrations before starting the server.
+# Secrets and external service config (S3, SMTP, SMS) come from .env (env_file);
+# service-hostname values are pinned below so compose networking always wins.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DATABASE__USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-secret}
+      POSTGRES_DB: ${DATABASE__NAME:-example}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE__USERNAME:-postgres} -d ${DATABASE__NAME:-example}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      target: runtime
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      APP__HOST: 0.0.0.0
+      APP__PORT: '3000'
+      SWAGGER__ENABLE: 'false'
+      DATABASE__HOST: postgres
+      DATABASE__PORT: '5432'
+      REDIS__URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:

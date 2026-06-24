@@ -1,0 +1,120 @@
+name: nestjs-mikroorm-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: example
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d example']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - '9000:9000' # S3 API
+      - '9001:9001' # Web console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: create the app bucket, then exit.
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      until (mc alias set local http://minio:9000 minioadmin minioadmin) do sleep 1; done;
+      mc mb --ignore-existing local/app-bucket;
+      exit 0;
+      "
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 'true'
+      MP_SMTP_AUTH_ALLOW_INSECURE: 'true'
+
+  app:
+    build:
+      context: .
+      target: build
+    command: sh -c "npx mikro-orm migration:up && npm run start:dev"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./src:/app/src
+      - ./i18n:/app/i18n
+    environment:
+      NODE_ENV: development
+      APP__HOST: 0.0.0.0
+      APP__PORT: '3000'
+      APP__CORS_ORIGIN: '*'
+      SWAGGER__ENABLE: 'true'
+      SWAGGER__PATH: docs
+      LOG__LEVEL: debug
+      LOG__ENABLE: 'true'
+      DATABASE__HOST: postgres
+      DATABASE__PORT: '5432'
+      DATABASE__USERNAME: postgres
+      DATABASE__PASSWORD: secret
+      DATABASE__NAME: example
+      DATABASE__SCHEMA: public
+      REDIS__URL: redis://redis:6379
+      SECURITY__HASH: argon2
+      AUTH__JWT_ACCESS_SECRET: dev-access-secret-change-me
+      AUTH__JWT_REFRESH_SECRET: dev-refresh-secret-change-me
+      S3__REGION: us-east-1
+      S3__ENDPOINT: http://minio:9000
+      S3__FORCE_PATH_STYLE: 'true'
+      S3__ACCESS_KEY_ID: minioadmin
+      S3__SECRET_ACCESS_KEY: minioadmin
+      S3__BUCKET: app-bucket
+      MAIL__TRANSPORT: smtp
+      MAIL__HOST: mailpit
+      MAIL__PORT: '1025'
+      MAIL__SECURE: 'false'
+      MAIL__FROM: dev@example.com
+      SMS__PROVIDER: log
+
+volumes:
+  pgdata:
+  miniodata:
