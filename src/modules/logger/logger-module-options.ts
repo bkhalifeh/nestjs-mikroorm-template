@@ -6,6 +6,7 @@ import {
 } from '../config/resources/node-resource';
 import { NodeEnv } from '../../common/enums/node-env.enum';
 import { v7 } from 'uuid';
+import { RequestMethod } from '@nestjs/common';
 
 export const loggerModuleOption: LoggerModuleAsyncParams = {
   useFactory: (nodeConfig: NodeConfigType) => {
@@ -46,6 +47,7 @@ export const loggerModuleOption: LoggerModuleAsyncParams = {
               },
             }),
       },
+      forRoutes: [{ method: RequestMethod.ALL, path: '*splat' }],
     };
   },
   inject: [NODE_CONFIG_PROVIDER.KEY],
